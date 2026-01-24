@@ -1,18 +1,13 @@
+from pymongo import MongoClient
+from dotenv import load_dotenv
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker, declarative_base
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATABASE_URL = f"sqlite:///{os.path.join(BASE_DIR, 'database.db')}"
+load_dotenv()
+# Підключення до MongoDB
+MONGO_URL = os.getenv("MONGO_URL")
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+if not MONGO_URL:
+    raise ValueError("MONGO_URL is not set in .env")
 
-SessionLocal = sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine
-)
-
-Base = declarative_base()
+client = MongoClient(MONGO_URL)
+db = client["System_Test"]
