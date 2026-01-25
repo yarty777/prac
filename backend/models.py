@@ -1,37 +1,38 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
-from sqlalchemy.orm import relationship
-from database import Base
+from pydantic import BaseModel, Field
+from typing import List, Optional
 from datetime import datetime
 
+class UserModel(BaseModel):
+    id: Optional[str] = Field(None, alias="_id")
+    username: str
+    email: Optional[str] = None
+    role: str = "user"
 
-class User(Base):
-    __tablename__ = "users"
+class QuizModel(BaseModel):
+    id: Optional[str] = Field(None, alias="_id")
+    title: str
+    topic: str
+    author_id: str
+    difficulty: int
+    created_at: datetime = datetime.utcnow()
 
-    id = Column(Integer, primary_key=True, index=True)
-    username = Column(String, unique=True, index=True, nullable=False)
-    email = Column(String, unique=True, index=True, nullable=False)
+class QuestionModel(BaseModel):
+    id: Optional[str] = Field(None, alias="_id")
+    quiz_id: str
+    text: str
+    option_a: str
+    option_b: str
+    option_c: str
+    option_d: str
+    correct_answer: str
+    points: int = 1
 
+class ResultModel(BaseModel):
+    id: Optional[str] = Field(None, alias="_id")
+    user_id: str
+    quiz_id: str
+    score: int
+    percentage: float
+    time_spent: int
+    completed_at: datetime = datetime.utcnow()
 
-class Quiz(Base):
-    __tablename__ = "quizzes"
-
-    id = Column(Integer, primary_key=True, index=True)
-    title = Column(String, nullable=False)
-    description = Column(String, nullable=True)
-
-    questions = relationship(
-        "Question",
-        back_populates="quiz",
-        cascade="all, delete"
-    )
-
-
-class Question(Base):
-    __tablename__ = "questions"
-
-    id = Column(Integer, primary_key=True, index=True)
-    quiz_id = Column(Integer, ForeignKey("quizzes.id"), nullable=False)
-    text = Column(String, nullable=False)
-    answer = Column(String, nullable=False)
-
-    quiz = relationship("Quiz", back_populates="questions")

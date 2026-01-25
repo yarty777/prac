@@ -1,17 +1,12 @@
 from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy.orm import Session
 from typing import List
-
 from database import SessionLocal, engine
 from models import Base, Quiz
 from schemas import QuizOut, QuizCreate, QuizUpdate
 
-# створення таблиць
-Base.metadata.create_all(bind=engine)
-
-app = FastAPI()
+app = FastAPI(title="Quiz System API")
 
 # CORS
 app.add_middleware(
@@ -43,12 +38,12 @@ def root():
 # ---------- QUIZZES ----------
 
 @app.get("/quizzes", response_model=List[QuizOut])
-def get_quizzes(db: Session = Depends(get_db)):
+def get_quizzes(db: Session = Depends(get_db)): # type: ignore
     return db.query(Quiz).all()
 
 
 @app.get("/quizzes/{id}", response_model=QuizOut)
-def get_quiz(id: int, db: Session = Depends(get_db)):
+def get_quiz(id: int, db: Session = Depends(get_db)): # type: ignore
     quiz = db.query(Quiz).filter(Quiz.id == id).first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -56,7 +51,7 @@ def get_quiz(id: int, db: Session = Depends(get_db)):
 
 
 @app.post("/quizzes", response_model=QuizOut, status_code=201)
-def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
+def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db)): # type: ignore
     new_quiz = Quiz(
         title=quiz.title,
         description=quiz.description
@@ -68,7 +63,7 @@ def create_quiz(quiz: QuizCreate, db: Session = Depends(get_db)):
 
 
 @app.put("/quizzes/{id}", response_model=QuizOut)
-def update_quiz(id: int, quiz_data: QuizUpdate, db: Session = Depends(get_db)):
+def update_quiz(id: int, quiz_data: QuizUpdate, db: Session = Depends(get_db)): # type: ignore
     quiz = db.query(Quiz).filter(Quiz.id == id).first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")
@@ -84,7 +79,7 @@ def update_quiz(id: int, quiz_data: QuizUpdate, db: Session = Depends(get_db)):
 
 
 @app.delete("/quizzes/{id}", status_code=204)
-def delete_quiz(id: int, db: Session = Depends(get_db)):
+def delete_quiz(id: int, db: Session = Depends(get_db)): # type: ignore
     quiz = db.query(Quiz).filter(Quiz.id == id).first()
     if not quiz:
         raise HTTPException(status_code=404, detail="Quiz not found")

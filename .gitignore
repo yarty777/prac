@@ -1,0 +1,29 @@
+# ============================
+# Python
+# ============================
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+venv/
+backend/venv/
+
+# ============================
+# Node / Frontend
+# ============================
+node_modules/
+frontend/node_modules/
+
+# ============================
+# VS Code / IDE
+# ============================
+.vscode/
+*.code-workspace
+.idea/
+
+# ============================
+# OS files
+# ============================
+.DS_Store
+Thumbs.db

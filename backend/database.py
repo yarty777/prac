@@ -1,11 +1,20 @@
-from pathlib import Path
+from pymongo import MongoClient
+from dotenv import load_dotenv
 import os
 
-from dotenv import load_dotenv
-from pymongo import MongoClient
+load_dotenv()
 
+MONGO_URL = os.getenv("MONGO_URL")
+if not MONGO_URL:
+    raise RuntimeError("MONGO_URL is not set")
 
-BASE_DIR = Path(__file__).resolve().parent
-ENV_PATH = BASE_DIR / ".env"
+client = MongoClient(MONGO_URL)
+db = client["System_Test"]
 
-Base = declarative_base()
+users_collection = db["users"]
+quizzes_collection = db["quizzes"]
+questions_collection = db["questions"]
+results_collection = db["results"]
+
+print("MongoDB connected")
+
