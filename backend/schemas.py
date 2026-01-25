@@ -1,16 +1,20 @@
 from pydantic import BaseModel
+from datetime import datetime
 
-class UserBase(BaseModel):
+class UserCreate(BaseModel):
     username: str
-    email: str
+    password: str
 
+class UserOut(BaseModel):
+    id: str
+    username: str
 
-class UserCreate(UserBase):
-    pass
+class ResultCreate(BaseModel):
+    score: int
+    percentage: float
+    time_spent: int
 
-
-class UserOut(UserBase):
-    id: int
-
-    class Config:
-        from_attributes = True
+class ResultOut(ResultCreate):
+    id: str
+    user_id: str
+    created_at: datetime

@@ -1,19 +1,11 @@
+from dotenv import load_dotenv 
+
+load_dotenv() 
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
-from models import Base
-from dotenv import load_dotenv
-import os
-
-
-#для env
-load_dotenv()
-
+from autentification.router import router as auth_router
+from CRUD.results import router as results_router
 
 app = FastAPI()
 
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-def root():
-    return {"message": "FastAPI is working"}
+app.include_router(auth_router)
+app.include_router(results_router)
