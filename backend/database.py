@@ -17,4 +17,3 @@ questions_collection = db["questions"]
 results_collection = db["results"]
 
 print("MongoDB connected")
-

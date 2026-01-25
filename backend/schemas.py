@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 from typing import List, Optional
-from database import datetime
+from datetime import datetime
 
 
-# ---------- USER ----------
+
 class UserBase(BaseModel):
     username: str
     password: str
@@ -12,7 +12,9 @@ class UserOut(BaseModel):
     id: str
     username: str
     role: str
-
+class UserCreate(BaseModel):
+    username: str
+    password: str
 class ResultCreate(BaseModel):
     quiz_id: str
     score: int
@@ -24,7 +26,6 @@ class ResultCreate(BaseModel):
         from_attributes = True
 
 
-# ---------- QUESTION ----------
 class QuestionOut(BaseModel):
     id: int
     text: str
@@ -33,8 +34,6 @@ class QuestionOut(BaseModel):
     class Config:
         from_attributes = True
 
-
-# ---------- QUIZ ----------
 class QuizOut(BaseModel):
     id: int
     title: str

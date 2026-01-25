@@ -28,6 +28,7 @@ def get_results():
         r["_id"] = str(r["_id"])
         results.append(r)
     return results
+
 @router.delete("/{item_id}")
 def delete_result(item_id: str):
     result = results_collection.delete_one({"_id": ObjectId(item_id)})
