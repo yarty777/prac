@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import datetime
 
@@ -46,8 +46,19 @@ class QuestionCreate(BaseModel):
     option_b: str
     option_c: str
     option_d: str
-    correct_answer: str
+    correct_answer: str = Field(..., pattern="^[A-D]$")  # A, B, C або D
     points: int = 1
+
+class QuestionUpdate(BaseModel):
+    """Схема для оновлення питання (всі поля опціональні)"""
+    text: Optional[str] = None
+    option_a: Optional[str] = None
+    option_b: Optional[str] = None
+    option_c: Optional[str] = None
+    option_d: Optional[str] = None
+    correct_answer: Optional[str] = Field(None, pattern="^[A-D]$")  # A, B, C або D
+    points: Optional[int] = None
+    quiz_id: Optional[str] = None  # Якщо хочете дозволити зміну quiz_id
 
 
 class QuestionOut(BaseModel):

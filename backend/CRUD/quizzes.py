@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
 
-from backend.database import quizzes_collection
-from backend.schemas import QuizCreate, QuizUpdate
+from database import quizzes_collection
+from schemas import QuizCreate, QuizUpdate
 
 router = APIRouter(
     prefix="/quizzes",
@@ -17,7 +17,7 @@ def quiz_helper(quiz: dict) -> dict:
         "topic": quiz["topic"],
         "author_id": quiz["author_id"],
         "difficulty": quiz["difficulty"],
-        "created_at": quiz["created_at"]
+        "created_at": quiz.get("created_at", datetime.utcnow())
     }
 
 
