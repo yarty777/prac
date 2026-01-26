@@ -5,7 +5,7 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import pytest
 from fastapi.testclient import TestClient
-from backend.main import app
+from main import app
 
 class FakeCollection:
     def __init__(self):

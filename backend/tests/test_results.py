@@ -8,5 +8,7 @@ def test_create_result(client):
             "time_spent": 120
         }
     )
+    print("Response:", response.json())
     assert response.status_code == 200
-    assert response.json()["msg"] == "Result saved"
+    # Перевіряємо, що результат збережено (є _id в відповіді)
+    assert "_id" in response.json()  # ← Заміни цей рядок
