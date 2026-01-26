@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from bson import ObjectId
-
+from datetime import datetime
 from database import quizzes_collection
 from schemas import QuizCreate, QuizUpdate
 
@@ -17,7 +17,7 @@ def quiz_helper(quiz: dict) -> dict:
         "topic": quiz["topic"],
         "author_id": quiz["author_id"],
         "difficulty": quiz["difficulty"],
-        "created_at": quiz.get("created_at", datetime.utcnow())
+        "created_at": quiz.get("created_at", datetime.utcnow()),
     }
 
 
