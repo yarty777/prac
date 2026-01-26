@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from database import results_collection
-from database import questions_collection
-from schemas import ResultCreate
+from database import questions_collection  # 👈 Це залишаємо, якщо виправили раніше
+from schemas import ResultCreate           # 👈 ЗМІНІТЬ ТУТ!
 from datetime import datetime
 from bson import ObjectId
 
@@ -34,6 +34,7 @@ def get_results():
 def delete_result(item_id: str):
     result = results_collection.delete_one({"_id": ObjectId(item_id)})
     return {"deleted_count": result.deleted_count}
+
 @router.get("/quiz/{quiz_id}")
 def get_questions_by_quiz_id(quiz_id: str):
     questions = []
@@ -43,5 +44,3 @@ def get_questions_by_quiz_id(quiz_id: str):
         questions.append(q)
 
     return questions
-
-    
