@@ -4,3 +4,7 @@ pymongo
 python-dotenv
 python-jose
 passlib[bcrypt]
+
+pytest
+pytest-asyncio
+httpx
