@@ -18,7 +18,6 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # ---------------- SECURITY ----------------
-# 🔥 ПРОСТІШЕ РІШЕННЯ - використовуємо bcrypt
 pwd_context = CryptContext(
     schemes=["bcrypt"],  # bcrypt завжди працює без додаткових бібліотек
     deprecated="auto"
@@ -32,12 +31,12 @@ class Role(str, Enum):
     student = "student"
 
 class UserCreate(BaseModel):
-    email: str  # Змінив з EmailStr на str для уникнення проблем
+    email: str 
     password: str
     role: Role = Role.student
 
 class LoginRequest(BaseModel):
-    email: str  # Змінив з EmailStr на str
+    email: str 
     password: str
 
 class TokenResponse(BaseModel):
@@ -47,7 +46,7 @@ class TokenResponse(BaseModel):
     email: str
     id: Optional[str] = None
 
-# ---------------- PASSWORD UTILS ----------------
+# PASSWORD UTILS
 def hash_password(password: str) -> str:
     try:
         return pwd_context.hash(password)
@@ -62,17 +61,16 @@ def verify_password(password: str, hashed: str) -> bool:
         return pwd_context.verify(password, hashed)
     except Exception as e:
         logger.warning(f"Password verification failed: {e}")
-        # Резервна перевірка
         import hashlib
         return hashlib.sha256(password.encode()).hexdigest() == hashed
-# ---------------- TOKEN UTILS ----------------
+# TOKEN UTILS 
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# ---------------- CURRENT USER ----------------
+# CURRENT USER 
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -91,7 +89,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-# ---------------- RBAC ----------------
+#RBAC
 def require_role(role: Role):
     def checker(user=Depends(get_current_user)):
         if user["role"] != role.value:
@@ -99,10 +97,10 @@ def require_role(role: Role):
         return user
     return checker
 
-# ---------------- ROUTER ----------------
+# ROUTER 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-# ---------------- REGISTER ----------------
+#REGISTER
 @router.post("/register", response_model=dict)
 def register(user: UserCreate):
     if users_collection.find_one({"email": user.email}):
@@ -130,7 +128,7 @@ str(result.inserted_id),
         "role": user.role.value if isinstance(user.role, Role) else user.role
     }
 
-# ---------------- LOGIN ----------------
+#LOGIN 
 @router.post("/login", response_model=TokenResponse)
 async def login(login_data: LoginRequest):
     """
@@ -174,7 +172,7 @@ async def login(login_data: LoginRequest):
         id=str(user.get("_id"))
     )
 
-# ---------------- FIX EXISTING USERS ----------------
+#FIX EXISTING USERS 
 @router.post("/fix-passwords")
 def fix_existing_users():
     """
@@ -200,7 +198,7 @@ def fix_existing_users():
         "fixed_count": fixed_count
     }
 
-# ---------------- PROTECTED ROUTES ----------------
+#PROTECTED ROUTES
 @router.get("/me", response_model=dict)
 def get_current_user_info(current_user: dict = Depends(get_current_user)):
     """Отримати інформацію про поточного користувача"""

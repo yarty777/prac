@@ -17,4 +17,5 @@ quizzes_collection = db["quizzes"]
 questions_collection = db["questions"]
 results_collection = db["results"]
 
+
 print("MongoDB connected")
