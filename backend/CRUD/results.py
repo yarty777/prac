@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException  # 👈 Додай HTTPException
 from database import results_collection
-from database import questions_collection  # 👈 Це залишаємо, якщо виправили раніше
-from schemas import ResultCreate           # 👈 ЗМІНІТЬ ТУТ!
+from database import questions_collection
+from schemas import ResultCreate
 from datetime import datetime
 from bson import ObjectId
 
@@ -28,6 +28,19 @@ def get_results():
     for r in results_collection.find():
         r["_id"] = str(r["_id"])
         results.append(r)
+    return results
+
+@router.get("/{user_id}") 
+def get_results_by_user(user_id: str):
+    """Отримати всі результати конкретного користувача"""
+    results = []
+    for r in results_collection.find({"user_id": user_id}):
+        r["_id"] = str(r["_id"])
+        results.append(r)
+    
+    if not results:
+        raise HTTPException(status_code=404, detail="No results found for this user")
+    
     return results
 
 @router.delete("/{item_id}")
