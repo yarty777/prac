@@ -5,6 +5,7 @@ from schemas import ResultCreate
 from datetime import datetime
 from bson import ObjectId
 
+
 router = APIRouter(prefix="/results", tags=["Results"])
 
 @router.post("/")
