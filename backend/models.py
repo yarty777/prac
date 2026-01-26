@@ -1,23 +1,16 @@
 from pydantic import BaseModel, Field
-from typing import List, Optional
 from datetime import datetime
-
-class UserModel(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
-    username: str
-    email: Optional[str] = None
-    role: str = "user"
+from typing import Optional
 
 class QuizModel(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
+    id: Optional[str] = Field(default=None, alias="_id")
     title: str
     topic: str
-    author_id: str
     difficulty: int
-    created_at: datetime = datetime.utcnow()
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class QuestionModel(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
+    id: Optional[str] = Field(default=None, alias="_id")
     quiz_id: str
     text: str
     option_a: str
@@ -26,16 +19,3 @@ class QuestionModel(BaseModel):
     option_d: str
     correct_answer: str
     points: int = 1
-
-class Config:
-     populate_by_name = True
-
-class ResultModel(BaseModel):
-    id: Optional[str] = Field(None, alias="_id")
-    user_id: str
-    quiz_id: str
-    score: int
-    percentage: float
-    time_spent: int
-    completed_at: datetime = datetime.utcnow()
-
