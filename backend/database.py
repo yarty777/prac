@@ -16,4 +16,6 @@ quizzes_collection = db["quizzes"]
 questions_collection = db["questions"]
 results_collection = db["results"]
 
-print("MongoDB connected")
+import sys
+if "pytest" not in sys.modules:  # Якщо не під час тесту
+    print("MongoDB connected")
