@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from jose import jwt, JWTError
 from passlib.context import CryptContext
 from datetime import datetime, timedelta
@@ -14,8 +14,12 @@ ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # ---------------- SECURITY ----------------
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")  # <- Ось тут
+pwd_context = CryptContext(
+    schemes=["argon2"],
+    deprecated="auto"
+)
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
 # ---------------- ROLES ----------------
 class Role(str, Enum):
@@ -25,18 +29,16 @@ class Role(str, Enum):
 class UserCreate(BaseModel):
     email: str
     password: str
-    role: str = "user"
+    role: str = "student"
 
-# ---------------- UTILS ----------------
-def hash_password(password: str):
-    truncated = password[:72]  # обрізаємо рядок, а не байти
-    return pwd_context.hash(truncated)
+# ---------------- PASSWORD UTILS ----------------
+def hash_password(password: str) -> str:
+    return pwd_context.hash(password)
 
-def verify_password(password: str, hashed: str):
-    truncated = password[:72]
-    return pwd_context.verify(truncated, hashed)
+def verify_password(password: str, hashed: str) -> bool:
+    return pwd_context.verify(password, hashed)
 
-
+# ---------------- TOKEN UTILS ----------------
 def create_access_token(data: dict):
     to_encode = data.copy()
     expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
@@ -49,76 +51,69 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
         role = payload.get("role")
+
         if not email or not role:
-            raise HTTPException(status_code=401, detail="Invalid token payload")
+            raise HTTPException(status_code=401, detail="Invalid token")
+
         user = users_collection.find_one({"email": email})
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
+
         return {"email": email, "role": role}
+
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
 # ---------------- RBAC ----------------
-
 def require_role(role: Role):
     def checker(user=Depends(get_current_user)):
-        # FIX: порівнюємо зі string, не Enum
         if user["role"] != role.value:
             raise HTTPException(status_code=403, detail="Forbidden")
         return user
     return checker
 
 # ---------------- ROUTER ----------------
-
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 # ---------------- REGISTER ----------------
-
 @router.post("/register")
 def register(user: UserCreate):
-    hashed_password = hash_password(user.password)
+    if users_collection.find_one({"email": user.email}):
+        raise HTTPException(status_code=400, detail="User already exists")
 
     new_user = {
         "email": user.email,
-        "password": hashed_password,
+        "password": hash_password(user.password),
         "role": user.role
     }
 
     users_collection.insert_one(new_user)
-
     return {"message": "User created"}
 
-
 # ---------------- LOGIN ----------------
-
 @router.post("/login")
-def login(email: str, password: str):
-    user = users_collection.find_one({"email": email})
+def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    user = users_collection.find_one({"email": form_data.username})
 
-    if not user or not verify_password(password, user["password"]):
+    if not user or not verify_password(form_data.password, user["password"]):
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
     token = create_access_token({
         "sub": user["email"],
-        # FIX: role вже string
         "role": user["role"]
     })
 
     return {
         "access_token": token,
+        "token_type": "bearer",
         "role": user["role"]
     }
 
-# ---------------- PROTECTED TEST ROUTES ----------------
-
+# ---------------- PROTECTED ROUTES ----------------
 @router.get("/teacher-only")
-def teacher_only(
-    user=Depends(require_role(Role.teacher))
-):
+def teacher_only(user=Depends(require_role(Role.teacher))):
     return {"msg": "Hello teacher"}
 
 @router.get("/student-only")
-def student_only(
-    user=Depends(require_role(Role.student))
-):
+def student_only(user=Depends(require_role(Role.student))):
     return {"msg": "Hello student"}

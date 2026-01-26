@@ -27,6 +27,9 @@ class QuestionModel(BaseModel):
     correct_answer: str
     points: int = 1
 
+class Config:
+     populate_by_name = True
+
 class ResultModel(BaseModel):
     id: Optional[str] = Field(None, alias="_id")
     user_id: str
