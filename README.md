@@ -8,7 +8,7 @@ The system allows users to register, authenticate, take tests, and store their r
 ## Authors
 
 * **Dmytruk Ivan** (EzX_Anub1s) — Backend developer
-* **Onyshchuk Oleksandra** — Backend developer
+* **Onyshchuk Oleksandra(alia2138)** — Backend developer
 
 ---
 
