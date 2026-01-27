@@ -188,3 +188,25 @@ def fix_existing_users():
         "message": f"Fixed {fixed_count} user passwords",
         "fixed_count": fixed_count
     }
+
+
+    # Кінець router.py - додай це:
+
+@router.get("/me")
+async def get_me(current_user: dict = Depends(get_current_user)):
+    """Get current user information"""
+    return {
+        "id": current_user["id"],
+        "email": current_user["email"],
+        "role": current_user["role"]
+    }
+
+@router.get("/teacher-only")
+async def teacher_only_endpoint(current_user: dict = Depends(get_current_user)):
+    """Teacher-only endpoint"""
+    if current_user.get("role") != "teacher":
+        raise HTTPException(
+            status_code=403,  # Просто 403, без status.HTTP_403_FORBIDDEN
+            detail="Teacher access required"
+        )
+    return {"message": "Welcome, teacher!"}
