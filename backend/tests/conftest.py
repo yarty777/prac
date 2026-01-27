@@ -1,4 +1,4 @@
-# tests/conftest.py
+# tests/conftest.py     python -m pytest tests/ -v      
 import sys
 import os
 import pytest

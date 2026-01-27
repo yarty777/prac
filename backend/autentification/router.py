@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from enum import Enum
 from database import users_collection
 import os
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 import logging
 
@@ -19,7 +19,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
 # ---------------- SECURITY ----------------
 pwd_context = CryptContext(
-    schemes=["bcrypt"],  # bcrypt завжди працює без додаткових бібліотек
+    schemes=["bcrypt"],
     deprecated="auto"
 )
 
@@ -44,15 +44,14 @@ class TokenResponse(BaseModel):
     token_type: str
     role: str
     email: str
-    id: Optional[str] = None
+    id: str  # Змінили з Optional[str] на str - завжди повертаємо ID
 
-# PASSWORD UTILS
+# PASSWORD UTILS (залишаємо без змін)
 def hash_password(password: str) -> str:
     try:
         return pwd_context.hash(password)
     except Exception as e:
         logger.error(f"Error hashing password: {e}")
-        # Резервний метод на випадок помилки
         import hashlib
         return hashlib.sha256(password.encode()).hexdigest()
 
@@ -63,6 +62,7 @@ def verify_password(password: str, hashed: str) -> bool:
         logger.warning(f"Password verification failed: {e}")
         import hashlib
         return hashlib.sha256(password.encode()).hexdigest() == hashed
+
 # TOKEN UTILS 
 def create_access_token(data: dict):
     to_encode = data.copy()
@@ -70,7 +70,7 @@ def create_access_token(data: dict):
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
-# CURRENT USER 
+# CURRENT USER - ФІКСУЄМО ТУТ
 def get_current_user(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
@@ -84,12 +84,17 @@ def get_current_user(token: str = Depends(oauth2_scheme)):
         if not user:
             raise HTTPException(status_code=401, detail="User not found")
 
-        return {"email": email, "role": role, "id": str(user.get("_id"))}
+        # ГАРАНТУЄМО, що повертаємо id з MongoDB _id
+        return {
+            "email": email, 
+            "role": role, 
+            "id": str(user.get("_id"))  # Завжди повертаємо id
+        }
 
     except JWTError:
         raise HTTPException(status_code=401, detail="Invalid token")
 
-#RBAC
+# RBAC (залишаємо без змін)
 def require_role(role: Role):
     def checker(user=Depends(get_current_user)):
         if user["role"] != role.value:
@@ -100,18 +105,17 @@ def require_role(role: Role):
 # ROUTER 
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
-#REGISTER
+# REGISTER - ФІКСУЄМО ТУТ
 @router.post("/register", response_model=dict)
 def register(user: UserCreate):
     if users_collection.find_one({"email": user.email}):
         raise HTTPException(status_code=400, detail="User already exists")
 
-    # Обов'язково хешуємо пароль
     hashed_password = hash_password(user.password)
     
     new_user = {
         "email": user.email,
-        "password": hashed_password,  # Хешований пароль
+        "password": hashed_password,
         "role": user.role.value if isinstance(user.role, Role) else user.role
     }
 
@@ -119,43 +123,33 @@ def register(user: UserCreate):
     
     logger.info(f"User registered: {user.email}")
     
+    # ГАРАНТУЄМО, що повертаємо id
     return {
         "message": "User created successfully",
-        "user_id":
-
-str(result.inserted_id),
+        "id": str(result.inserted_id),  # Повертаємо як id
         "email": user.email,
         "role": user.role.value if isinstance(user.role, Role) else user.role
     }
 
-#LOGIN 
+# LOGIN - ФІКСУЄМО ТУТ
 @router.post("/login", response_model=TokenResponse)
 async def login(login_data: LoginRequest):
     """
     Ендпоінт для входу в систему.
-    Приймає JSON: {"email": "user@example.com", "password": "password123"}
     """
-    # Знаходимо користувача в базі даних
     user = users_collection.find_one({"email": login_data.email})
     
     if not user:
         logger.warning(f"Login failed: User {login_data.email} not found")
-        raise HTTPException(
-            status_code=401, 
-            detail="Invalid credentials"
-        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     
     logger.info(f"User found: {login_data.email}, checking password...")
     
-    # Перевіряємо пароль
     if not verify_password(login_data.password, user["password"]):
         logger.warning(f"Login failed: Invalid password for {login_data.email}")
-        raise HTTPException(
-            status_code=401, 
-            detail="Invalid credentials"
-        )
+        raise HTTPException(status_code=401, detail="Invalid credentials")
     
-    # Створюємо токен
+    # ГАРАНТУЄМО, що в токені є всі дані
     token = create_access_token({
         "sub": user["email"],
         "role": user["role"]
@@ -163,21 +157,18 @@ async def login(login_data: LoginRequest):
 
     logger.info(f"Login successful: {login_data.email}")
     
-    # Повертаємо відповідь
+    # ГАРАНТУЄМО, що повертаємо id
     return TokenResponse(
         access_token=token,
         token_type="bearer",
         role=user["role"],
         email=user["email"],
-        id=str(user.get("_id"))
+        id=str(user.get("_id"))  # Завжди повертаємо id
     )
 
-#FIX EXISTING USERS 
+# FIX EXISTING USERS (залишаємо без змін)
 @router.post("/fix-passwords")
 def fix_existing_users():
-    """
-    Функція для виправлення наявних користувачів (хешування паролів)
-    """
     fixed_count = 0
     users = users_collection.find({})
     
@@ -197,21 +188,3 @@ def fix_existing_users():
         "message": f"Fixed {fixed_count} user passwords",
         "fixed_count": fixed_count
     }
-
-#PROTECTED ROUTES
-@router.get("/me", response_model=dict)
-def get_current_user_info(current_user: dict = Depends(get_current_user)):
-    """Отримати інформацію про поточного користувача"""
-    return {
-        "email": current_user["email"],
-        "role": current_user["role"],
-        "id": current_user.get("id")
-    }
-
-@router.get("/teacher-only")
-def teacher_only(user=Depends(require_role(Role.teacher))):
-    return {"msg": "Hello teacher"}
-
-@router.get("/student-only")
-def student_only(user=Depends(require_role(Role.student))):
-    return {"msg": "Hello student"}
