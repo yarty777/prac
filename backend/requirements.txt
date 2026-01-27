@@ -1,10 +1,1 @@
-fastapi
-uvicorn
-pymongo
-python-dotenv
-python-jose
-passlib[bcrypt]
-
-pytest
-pytest-asyncio
-httpx
+fastapi uvicorn motor pydantic python-jose passlib[bcrypt] bcrypt cryptography python-multipart python-dotenv pytest pytest-asyncio pytest-mock pytest-playwright playwright
