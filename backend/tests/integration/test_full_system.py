@@ -128,3 +128,86 @@ async def test_full_system(async_client):
     )
     assert results.status_code == 200
     assert len(results.json()) == 1
+
+     # --------------------
+    # 10) Get question by ID
+    # --------------------
+    get_one = await async_client.get(f"/questions/{question_id}")
+    assert get_one.status_code == 200
+    assert get_one.json()["text"] == "What is 2+2?"
+
+    # --------------------
+    # 11) Get questions by quiz_id
+    # --------------------
+    quiz_questions = await async_client.get("/questions/quiz/quiz_1")
+    assert quiz_questions.status_code == 200
+    assert len(quiz_questions.json()) == 1
+
+    # --------------------
+    # 12) Update question
+    # --------------------
+    update_res = await async_client.put(
+        f"/questions/{question_id}",
+        json={
+            "text": "What is 3+3?",
+            "correct_answer": "C",
+            "points": 2
+        }
+    )
+    assert update_res.status_code == 200
+    updated = update_res.json()
+    assert updated["text"] == "What is 3+3?"
+    assert updated["points"] == 2
+
+    # --------------------
+    # 13) Check updated question
+    # --------------------
+    check_update = await async_client.get(f"/questions/{question_id}")
+    assert check_update.status_code == 200
+    assert check_update.json()["text"] == "What is 3+3?"
+
+    # --------------------
+    # 14) Delete question by ID
+    # --------------------
+    delete_res = await async_client.delete(f"/questions/{question_id}")
+    assert delete_res.status_code == 200
+    assert delete_res.json()["message"] == "Question deleted successfully"
+
+    # --------------------
+    # 15) Ensure question is deleted
+    # --------------------
+    not_found = await async_client.get(f"/questions/{question_id}")
+    assert not_found.status_code == 404
+
+    # --------------------
+    # 16) Create multiple questions for quiz
+    # --------------------
+    for i in range(3):
+        res = await async_client.post(
+            "/questions/",
+            json={
+                "quiz_id": "quiz_bulk",
+                "text": f"Question {i}",
+                "option_a": "A",
+                "option_b": "B",
+                "option_c": "C",
+                "option_d": "D",
+                "correct_answer": "A",
+                "points": 1
+            }
+        )
+        assert res.status_code == 200
+
+    # --------------------
+    # 17) Delete all questions by quiz_id
+    # --------------------
+    delete_bulk = await async_client.delete("/questions/quiz/quiz_bulk")
+    assert delete_bulk.status_code == 200
+    assert "Deleted 3 questions" in delete_bulk.json()["message"]
+
+    # --------------------
+    # 18) Ensure quiz questions are gone
+    # --------------------
+    check_bulk = await async_client.get("/questions/quiz/quiz_bulk")
+    assert check_bulk.status_code == 200
+    assert len(check_bulk.json()) == 0
